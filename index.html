@@ -2359,9 +2359,15 @@ function SymptomRadar({
     };
   });
   const n = order.length;
+  /* R is derived, not a fixed guess: it guarantees the longest label ("Fatigue",
+     "Anxiety") plus its outward offset always lands inside the viewBox, at any
+     size prop this component is given (it's used at both 240 and 300). Without
+     this, labels at the leftmost/rightmost points of the wheel get clipped. */
+  const LABEL_TEXT_ALLOWANCE = 54; // px reserved for the widest label at the outer edge
+  const LABEL_RADIUS_FACTOR = (SEV_MAX + 0.62) / SEV_MAX; // matches the *(maxV+0.62) offset used below
   const cx = size / 2,
     cy = size / 2,
-    R = size / 2 - 46,
+    R = (size / 2 - LABEL_TEXT_ALLOWANCE) / LABEL_RADIUS_FACTOR,
     maxV = SEV_MAX;
   const ang = i => Math.PI * 2 * i / n - Math.PI / 2;
   const at = (i, v) => [cx + R * (v / maxV) * Math.cos(ang(i)), cy + R * (v / maxV) * Math.sin(ang(i))];
@@ -2372,7 +2378,8 @@ function SymptomRadar({
     style: {
       display: "block",
       maxWidth: size,
-      margin: "0 auto"
+      margin: "0 auto",
+      overflow: "visible"
     }
   }, /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("radialGradient", {
     id: "radarFill",
@@ -2692,9 +2699,12 @@ function App() {
     const iOS = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
     const isFirefox = /Firefox|FxiOS/.test(ua);
     const isSamsung = /SamsungBrowser/.test(ua);
+    const isChromeOrEdge = /Chrome|CriOS|Edg\//.test(ua);
+    const isMacSafari = !iOS && /Macintosh/.test(ua) && /Safari/.test(ua) && !isChromeOrEdge && !isFirefox;
     if (iOS) return "ios";
     if (isSamsung) return "samsung";
     if (isFirefox) return "firefox";
+    if (isMacSafari) return "mac-safari";
     if (/Android/.test(ua)) return "android";
     return "desktop";
   }
@@ -3963,8 +3973,11 @@ function App() {
       if (platform === "samsung") {
         return /*#__PURE__*/React.createElement("p", null, /*#__PURE__*/React.createElement("strong", null, "Samsung Internet:"), " tap the menu icon, choose ", /*#__PURE__*/React.createElement("em", null, "Add page to"), " then ", /*#__PURE__*/React.createElement("em", null, "Home screen"), ", then confirm ", /*#__PURE__*/React.createElement("em", null, "Add"), ".");
       }
+      if (platform === "mac-safari") {
+        return /*#__PURE__*/React.createElement("p", null, "On a Mac, Safari calls this ", /*#__PURE__*/React.createElement("strong", null, "Add to Dock"), " rather than \u201cAdd to Home Screen.\u201d Click the ", /*#__PURE__*/React.createElement("strong", null, "Share"), " button in Safari\u2019s toolbar (or the ", /*#__PURE__*/React.createElement("strong", null, "File"), " menu), then choose ", /*#__PURE__*/React.createElement("em", null, "Add to Dock"), ". This needs ", /*#__PURE__*/React.createElement("strong", null, "macOS Sonoma (14) or newer"), " with Safari 17+; check via the Apple menu \u2192 ", /*#__PURE__*/React.createElement("em", null, "About This Mac"), ". If you don\u2019t see this option at all, your Mac is on an older macOS and this feature doesn\u2019t exist there, open this same link in ", /*#__PURE__*/React.createElement("strong", null, "Chrome"), " or ", /*#__PURE__*/React.createElement("strong", null, "Edge"), " instead, which support installing regardless of macOS version.");
+      }
       if (platform === "desktop") {
-        return /*#__PURE__*/React.createElement("p", null, "On a computer, look for a small install icon at the right-hand end of the address bar (Chrome or Edge), or use the browser\u2019s menu and look for ", /*#__PURE__*/React.createElement("em", null, "Install app"), " / ", /*#__PURE__*/React.createElement("em", null, "Install this site as an app"), ". On a Mac in Safari, use the Share icon and choose ", /*#__PURE__*/React.createElement("em", null, "Add to Dock"), ".");
+        return /*#__PURE__*/React.createElement("p", null, "On a computer, look for a small install icon at the right-hand end of the address bar (Chrome or Edge), or use the browser\u2019s menu and look for ", /*#__PURE__*/React.createElement("em", null, "Install app"), " / ", /*#__PURE__*/React.createElement("em", null, "Install this site as an app"), ".");
       }
       return null;
     })(),
